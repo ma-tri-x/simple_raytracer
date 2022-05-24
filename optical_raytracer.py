@@ -57,7 +57,7 @@ class Lens(object):
     
     def Newtonstep(self,ray_inst,sidefunc,yn):
         ynn= yn - self._f(ray_inst, sidefunc,yn)/((self._f(ray_inst, sidefunc,yn+1e-7)-self._f(ray_inst, sidefunc,yn-1e-7))/2e-7)
-        if DEBUG: print "ynn = {}".format(ynn)
+        if DEBUG: print("ynn = {}".format(ynn))
         return ynn
     
     def Newton_find_yzero(self, ray_inst, sidefunc, yn = 0.):
@@ -81,7 +81,7 @@ class Lens(object):
 
     def refract_ray_curved(self,ray_inst, water_x):
         for sidefunc in [self.left_x,self.right_x]:
-            if DEBUG: print "-- {}".format(sidefunc)
+            if DEBUG: print("-- {}".format(sidefunc))
             willhit=True
             iteration = 0
             yn = 0.
@@ -108,12 +108,12 @@ class Lens(object):
                     ratio = env_n/self.n
                     if np.mod(iteration,2) == 1: ratio = 1./ratio
                     if sidefunc == self.right_x: ratio = 1./ratio
-                    if DEBUG: print "- iter: {}, ratio: {}".format(iteration, ratio)
-                    if DEBUG: print "- np.abs(ratio * np.sin(angle_left)): {}".format(np.abs(ratio * np.sin(angle_left)))
+                    if DEBUG: print("- iter: {}, ratio: {}".format(iteration, ratio))
+                    if DEBUG: print("- np.abs(ratio * np.sin(angle_left)): {}".format(np.abs(ratio * np.sin(angle_left))))
                     if np.abs(ratio * np.sin(angle_left)) < 1.0:
                         angle_2 = np.arcsin(ratio * np.sin(angle_left))
                         angle_tilt = angle_left-angle_2
-                        if DEBUG: print "- angle_left {}, angle_2 {}, angle_tilt: {}".format(angle_left/np.pi*180., angle_2/np.pi*180.,angle_tilt/np.pi*180.)
+                        if DEBUG: print("- angle_left {}, angle_2 {}, angle_tilt: {}".format(angle_left/np.pi*180., angle_2/np.pi*180.,angle_tilt/np.pi*180.))
                         nrot = np.array([0.,0.])
                         signA = (-1)**(iteration+1)
                         #if sidefunc == self.right_x: signA = -signA
@@ -125,8 +125,8 @@ class Lens(object):
                         ray_inst.nx = nrot[0]
                         ray_inst.ny = nrot[1]
                         ray_inst.add_pos(xhit,yhit)
-                        if DEBUG: print "- using xhit: {}, yhit {}".format(xhit,yhit)
-                        if DEBUG: print "- new nx: {}, ny {}".format(ray_inst.nx,ray_inst.ny)
+                        if DEBUG: print("- using xhit: {}, yhit {}".format(xhit,yhit))
+                        if DEBUG: print("- new nx: {}, ny {}".format(ray_inst.nx,ray_inst.ny))
                         if DEBUGADV: plt.arrow(xhit,yhit,ray_inst.nx*1e-4,ray_inst.ny*1e-4,head_width=0.,width=0.3e-4,color="green")
                         willhit = False
                         if np.abs(ratio * np.sin(angle_left)) >= 0.90:
@@ -136,12 +136,12 @@ class Lens(object):
                             curv = sec_deriv/(1.+fst_deriv*fst_deriv)**(1.5)
                             rad = np.abs(1./curv)
                             yn_new = yhit + ray_inst.ny * 2.*rad*np.cos(angle_2)
-                            if DEBUG: print "- close to TIR. R: {}, Proposing new yn: {}".format(rad,yn_new)
+                            if DEBUG: print("- close to TIR. R: {}, Proposing new yn: {}".format(rad,yn_new))
                             yn = yn_new
                             
                         iteration += 1
                     else:
-                        if DEBUG : print "- inside TIR"
+                        if DEBUG : print("- inside TIR")
                         angle_tilt = 2.*(np.pi/2. - angle_left)
                         nrot = np.array([0.,0.])
                         if (nray+lens_orthonormal)[1] < 0.:
@@ -151,8 +151,8 @@ class Lens(object):
                         ray_inst.nx = nrot[0]
                         ray_inst.ny = nrot[1]
                         ray_inst.add_pos(xhit,yhit)
-                        if DEBUG: print "- using xhit: {}, yhit {}".format(xhit,yhit)
-                        if DEBUG: print "- new nx: {}, ny {}".format(ray_inst.nx,ray_inst.ny)
+                        if DEBUG: print("- using xhit: {}, yhit {}".format(xhit,yhit))
+                        if DEBUG: print("- new nx: {}, ny {}".format(ray_inst.nx,ray_inst.ny))
                         ray_inst.add_pos(xhit+nrot[0]*1e-3,yhit+nrot[1]*1e-3)
                         if DEBUGADV: plt.arrow(xhit,yhit,ray_inst.nx*1e-4,ray_inst.ny*1e-4,head_width=0.,width=0.3e-4,color="red")
                         
@@ -191,13 +191,13 @@ class Mirror(Lens):
 
     def refract_ray_curved(self,ray_inst, water_x):
         for sidefunc in [self.left_x]:
-            if DEBUG: print "-- Mirror"
+            if DEBUG: print("-- Mirror")
             willhit = True
             yhit = self.Newton_find_yzero(ray_inst, sidefunc)
             xhit = sidefunc(yhit)
             if np.abs(yhit) > self.h/2.: willhit= False
             if willhit:
-                if DEBUG : print "- hit and reflecting"
+                if DEBUG : print("- hit and reflecting")
                 # tangentiale und orthonormale berechnen und plotten
                 lens_deriv_x = sidefunc(yhit+1e-6) - sidefunc(yhit-1e-6)
                 lens_tangential = np.array([lens_deriv_x,2e-6])
@@ -220,8 +220,8 @@ class Mirror(Lens):
                 ray_inst.nx = nrot[0]
                 ray_inst.ny = nrot[1]
                 ray_inst.add_pos(xhit,yhit)
-                if DEBUG: print "- xhit: {}, yhit {}".format(xhit,yhit)
-                if DEBUG: print "- new nx: {}, ny {}".format(ray_inst.nx,ray_inst.ny)
+                if DEBUG: print("- xhit: {}, yhit {}".format(xhit,yhit))
+                if DEBUG: print("- new nx: {}, ny {}".format(ray_inst.nx,ray_inst.ny))
                 #ray_inst.add_pos(xhit+nrot[0]*1e-3,yhit+nrot[1]*1e-3)
                 if DEBUGADV: plt.arrow(xhit,yhit,ray_inst.nx*1e-4,ray_inst.ny*1e-4,head_width=0.,width=0.3e-4,color="red")
                 
@@ -264,7 +264,10 @@ class SphLLens(Lens):
         self.offset_x=Lens().offset_x
         
     def left_x(self,y):
-        posx = np.sqrt(self.R*self.R - y*y) - self.offset_x - np.sqrt(self.R*self.R - self.h*self.h/4.)
+        if self.R=="inf":
+            return self.offset_x
+        else:
+            posx = np.sqrt(self.R*self.R - y*y) - self.offset_x - np.sqrt(self.R*self.R - self.h*self.h/4.)
         return -posx
     
     def right_x(self,y):
@@ -272,6 +275,31 @@ class SphLLens(Lens):
             return self.d + self.offset_x
         else:
             return np.sqrt(self.Rr*self.Rr - y*y) + self.d + self.offset_x - np.sqrt(self.Rr*self.Rr - self.h*self.h/4.)
+    
+class SphConcaveLens(Lens):
+    def __init__(self, Rl, Rr, d):
+        self.info="concave lens"
+        self.R=Rl
+        self.Rr=Rr
+        self.d = d
+        self.h = Lens().h
+        self.n=1.43
+        self.offset_x=Lens().offset_x
+        
+    def left_x(self,y):
+        if self.R=="inf":
+            return self.offset_x - 0.5*self.d
+        else:
+            center = self.offset_x - 0.5*self.d - self.R
+            posx = np.sqrt(self.R*self.R - y*y) + center
+        return posx
+    
+    def right_x(self,y):
+        if self.Rr=="inf":
+            return self.d + 0.5*self.offset_x
+        else:
+            center = self.offset_x + 0.5*self.d + self.Rr
+            return -np.sqrt(self.Rr*self.Rr - y*y) + center 
     
 class ParabLens(Lens):
     def __init__(self, a, b, d):
@@ -317,7 +345,7 @@ class Beam(object):
                 if np.abs(i.ny) > np.abs(2.*i.nx): endx = i.pos_x(-1) + 5e-3 
                 last_y = i.ny/i.nx * endx + (i.pos_y(-1) - i.ny/i.nx*i.pos_x(-1))
                 i.add_pos(endx,last_y)
-                if DEBUG: print "---END: num {}, last_x {}, last_y {}".format(num,endx,last_y)
+                if DEBUG: print("---END: num {}, last_x {}, last_y {}".format(num,endx,last_y))
             if DEBUG: plt.text(i.pos_x(-1)+1e-4,i.pos_y(-1),str(num))
             num+=1
             
@@ -334,7 +362,7 @@ class Beam(object):
     def refract_rays(self):
         for lens in self.lenses:
             for num,ray in enumerate(self.rays):
-                print "---{}---".format(num)
+                print("---{}---".format(num))
                 lens.refract_ray_curved(ray,self.water_x)
                 
     def plot_rays(self):
