@@ -290,7 +290,7 @@ class ParabLens(Lens):
         return self.d + self.a*(self.h/2.)**2 + self.offset_x + self.b*(self.h/2.)**2 - self.b*y*y
 
 class Beam(object):
-    def __init__(self, width=5e-3, raycount=10, startx=-10e-3, water_x=0., endx=60e-3, debug=False):
+    def __init__(self, width=5e-3, raycount=10, startx=-10e-3, water_x=0., endx=60e-3, debug=False, beam_offset_y = 0.):
         self.width = width
         self.startx = startx
         self.endx = endx
@@ -304,7 +304,7 @@ class Beam(object):
             self.rays.append(Ray(startx,self.width))
         else:
             for i in range(self.raycount):
-                new_y = -self.width/2. + i*self.width/(self.raycount-1.)
+                new_y = -self.width/2. + i*self.width/(self.raycount-1.) + beam_offset_y
                 #print -self.width/2. + i*self.width/(self.raycount-1.)
                 self.rays.append(Ray(startx,new_y))
         
