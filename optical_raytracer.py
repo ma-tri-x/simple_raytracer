@@ -328,11 +328,12 @@ class Beam(object):
         self.rays = []
         self.lenses = []
         self.debug = debug
+        self.beam_offset_y = beam_offset_y
         if self.raycount == 1:
             self.rays.append(Ray(startx,self.width))
         else:
             for i in range(self.raycount):
-                new_y = -self.width/2. + i*self.width/(self.raycount-1.) + beam_offset_y
+                new_y = -self.width/2. + i*self.width/(self.raycount-1.) + self.beam_offset_y
                 #print -self.width/2. + i*self.width/(self.raycount-1.)
                 self.rays.append(Ray(startx,new_y))
         
@@ -349,12 +350,12 @@ class Beam(object):
             if DEBUG: plt.text(i.pos_x(-1)+1e-4,i.pos_y(-1),str(num))
             num+=1
             
-    #def write_output(self):
-        #with open("out.dat", 'w') as out:
-            #for ray in self.rays:
-                #for j,x in enumerate(ray.x):
-                    #out.write("{}  {}\n".format(x,ray.y[j]))
-                #out.write("\n")
+    def write_output(self):
+        with open("out.dat", 'w') as out:
+            for ray in self.rays:
+                for j,x in enumerate(ray.x):
+                    out.write("{}  {}\n".format(x,ray.y[j]))
+                out.write("\n")
     
     def add_lens(self,lens_inst):
         self.lenses.append(lens_inst)
@@ -369,6 +370,47 @@ class Beam(object):
         for num,ray in enumerate(self.rays):
             if DEBUG: plt.plot(ray.x,ray.y,'o-')
             else: plt.plot(ray.x,ray.y,color=(np.mod(num-1,2),np.mod(num,2),0,1))
+            
+class PointSource(Beam):
+    def __init__(self, width=5e-3, raycount=10, startx=-10e-3, water_x=0., endx=60e-3, debug=False, beam_offset_y = 0.,
+                 spray_angle = 10.):
+        Beam.__init__(self,width, raycount, startx, water_x, endx, debug, beam_offset_y)
+        self.spray_angle = spray_angle
+        if self.raycount == 1:
+            self.rays.append(Ray(startx,self.width))
+        else:
+            d_alpha = self.spray_angle/float(self.raycount -1)
+            for inst_num,_ in enumerate(self.rays):
+                alpha = (inst_num * d_alpha - 0.5*self.spray_angle)/180.*np.pi # np.arctan(beam.rays[inst_num].pos_y(-1)/focal_dist)
+                self.rays[inst_num].nx = np.cos(alpha)
+                self.rays[inst_num].ny = -np.sin(alpha)
+                self.rays[inst_num].y[0] = self.beam_offset_y
+                if DEBUG: print("ray num: {}, ray.nx: {}, ray.ny: {}, alpha: {}".format(inst_num,self.rays[inst_num].nx,
+                                                                                       self.rays[inst_num].ny, alpha))
+                #self.rays[inst_num].y[0] = self.beam_offset_y
+
+class PointSourceArray(PointSource):
+    def __init__(self, width=5e-3, raycount=10, startx=-10e-3, water_x=0., endx=60e-3, debug=False, beam_offset_y = 0.,
+                 spray_angle = 10., number_of_sources = 7):
+        PointSource.__init__(self,width, raycount, startx, water_x, endx, debug, beam_offset_y,spray_angle)
+        self.number_of_sources = number_of_sources
+        dy = self.width/float(self.number_of_sources)
+        new_rays = []
+        d_alpha = self.spray_angle/float(self.raycount -1)
+        for inst_num,ray in enumerate(self.rays):
+            new_y = - 0.5*self.width + self.beam_offset_y
+            ray.y[0] = new_y
+            if DEBUG: print("ray num: {}, ray.nx: {}, ray.ny: {}, ray.y: {}".format(inst_num,ray.nx,ray.ny,ray.y[0]))
+            for source_pos in range(self.number_of_sources - 1):
+                alpha = (inst_num * d_alpha - 0.5*self.spray_angle)/180.*np.pi
+                new_y = (source_pos + 1)* dy + ray.y[0]
+                newRay = Ray(self.startx,new_y)
+                newRay.nx = np.cos(alpha)
+                newRay.ny = -np.sin(alpha)
+                new_rays.append(newRay)
+                if DEBUG: print("newRay num: {}, newRay.y[0] {}".format(source_pos, newRay.y[0]))
+        self.rays.extend(new_rays)
+        
         
     
 class WaterLens(Beam,Lens):
