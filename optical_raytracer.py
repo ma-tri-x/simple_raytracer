@@ -394,7 +394,7 @@ class PointSourceArray(PointSource):
                  spray_angle = 10., number_of_sources = 7):
         PointSource.__init__(self,width, raycount, startx, water_x, endx, debug, beam_offset_y,spray_angle)
         self.number_of_sources = number_of_sources
-        dy = self.width/float(self.number_of_sources)
+        dy = self.width/(float(self.number_of_sources)-1)
         new_rays = []
         d_alpha = self.spray_angle/float(self.raycount -1)
         for inst_num,ray in enumerate(self.rays):
