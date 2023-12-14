@@ -317,6 +317,25 @@ class ParabLens(Lens):
     def right_x(self,y):
         return self.d + self.a*(self.h/2.)**2 + self.offset_x + self.b*(self.h/2.)**2 - self.b*y*y
 
+class AxiconLens(Lens):
+    def __init__(self,d,phi):
+        self.info="axicon lens. phi is angle in the center peak. alpha is the angle at the edge"
+        self.R="inf"
+        self.phi=phi
+        self.alpha=90.-phi/2.
+        self.d = d
+        self.h = Lens().h
+        self.n=1.4607
+        self.offset_x=Lens().offset_x
+        
+    def left_x(self,y):
+        return self.offset_x
+        
+    def right_x(self,y):
+        center_length = np.tan(self.alpha/180.*np.pi)*self.h/2.
+        return self.offset_x + self.d + center_length * (1.0 - np.abs(y)/(self.h/2.))
+        
+
 class Beam(object):
     def __init__(self, width=5e-3, raycount=10, startx=-10e-3, water_x=0., endx=60e-3, debug=False, beam_offset_y = 0.):
         self.width = width
@@ -343,19 +362,19 @@ class Beam(object):
             if i.use:
                 endx = self.endx
                 last_y = 0.
-                if np.abs(i.ny) > np.abs(2.*i.nx): endx = i.pos_x(-1) + 5e-3 
+                if np.abs(i.ny) > np.abs(2.*i.nx): endx = i.pos_x(-1) + np.sign(i.nx)*5e-3 
                 last_y = i.ny/i.nx * endx + (i.pos_y(-1) - i.ny/i.nx*i.pos_x(-1))
                 i.add_pos(endx,last_y)
                 if DEBUG: print("---END: num {}, last_x {}, last_y {}".format(num,endx,last_y))
             if DEBUG: plt.text(i.pos_x(-1)+1e-4,i.pos_y(-1),str(num))
             num+=1
             
-    def write_output(self):
-        with open("out.dat", 'w') as out:
-            for ray in self.rays:
-                for j,x in enumerate(ray.x):
-                    out.write("{}  {}\n".format(x,ray.y[j]))
-                out.write("\n")
+    #def write_output(self):
+        #with open("out.dat", 'w') as out:
+            #for ray in self.rays:
+                #for j,x in enumerate(ray.x):
+                    #out.write("{}  {}\n".format(x,ray.y[j]))
+                #out.write("\n")
     
     def add_lens(self,lens_inst):
         self.lenses.append(lens_inst)
@@ -476,4 +495,14 @@ class ParabMirror(Mirror):
     
     def left_x(self,y):
         posx = -self.coeff*y*y + self.offset_x
+        return posx
+    
+class OffAxisParabMirror(Mirror):
+    def __init__(self, offset_x=0., h=50.8e-3, f=101.6e-3):
+        self.offset_x=offset_x
+        self.h = h
+        self.f = f
+    
+    def left_x(self,y):
+        posx = -1./(2.*self.f)*(y-self.f)**2 + self.offset_x + self.f/2.
         return posx
