@@ -356,13 +356,13 @@ class Beam(object):
                 #print -self.width/2. + i*self.width/(self.raycount-1.)
                 self.rays.append(Ray(startx,new_y))
         
-    def end(self):
+    def end(self,dx_end=5e-3):
         num=0
         for i in self.rays:
             if i.use:
                 endx = self.endx
                 last_y = 0.
-                if np.abs(i.ny) > np.abs(2.*i.nx): endx = i.pos_x(-1) + np.sign(i.nx)*5e-3 
+                if np.abs(i.ny) > np.abs(2.*i.nx): endx = i.pos_x(-1) + np.sign(i.nx)*dx_end 
                 last_y = i.ny/i.nx * endx + (i.pos_y(-1) - i.ny/i.nx*i.pos_x(-1))
                 i.add_pos(endx,last_y)
                 if DEBUG: print("---END: num {}, last_x {}, last_y {}".format(num,endx,last_y))
