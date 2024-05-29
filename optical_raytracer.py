@@ -168,6 +168,35 @@ class Lens(object):
         plt.plot(lx,ly)
         plt.plot(rx,ly)
         
+        
+    def _X(self,x,y,rotation):
+        return x*np.cos(rotation) - y*np.sin(rotation)
+
+    def _Y(self,x,y,rotation):
+        return x*np.sin(rotation) + y*np.cos(rotation)
+
+    def _newton_f(self,x,y,rotation,sidefunc):
+        # weil X = sidefunc(Y), sozusagen. Also 0 = sidefunc(Y)-X
+        return sidefunc(self._Y(x,y,rotation)) - self._X(x,y,rotation) # komischerweise muss da n plus hin...
+
+    def rotateLens(self,rotation,sidefunc,y):
+        dx = 1e-5
+        x = self.offset_x
+        relTol = 1e-5
+        tol = 1e6
+        maxIter = 1000
+        i = 0
+        while tol > relTol and i < maxIter:
+            df = (self._newton_f(x+dx,y,rotation,sidefunc) - self._newton_f(x-dx,y,rotation,sidefunc))/(2.*dx)
+            xnew = x - self._newton_f(x,y,rotation,sidefunc)/df
+            tol = np.abs(xnew-x)/np.abs(x+1e-10)
+            i = i+1
+            #print(i,y,ynew, df,f(x,y,rotation), tol)
+            x = xnew
+        if i >= maxIter: x = np.nan
+        return x
+        
+        
 class Mirror(Lens):
     def __init__(self, offset_x=0., h=1e-2):
         self.offset_x=offset_x
@@ -318,7 +347,7 @@ class ParabLens(Lens):
         return self.d + self.a*(self.h/2.)**2 + self.offset_x + self.b*(self.h/2.)**2 - self.b*y*y
 
 class AxiconLens(Lens):
-    def __init__(self,d,phi):
+    def __init__(self,d,phi,rotation=0.):
         self.info="axicon lens. phi is angle in the center peak. alpha is the angle at the edge"
         self.R="inf"
         self.phi=phi
@@ -327,13 +356,32 @@ class AxiconLens(Lens):
         self.h = Lens().h
         self.n=1.4607
         self.offset_x=Lens().offset_x
+        self.rotation = rotation/180.*np.pi # rotation in degC
         
-    def left_x(self,y):
+    #def left_x(self,y,rotation=self.rotation):
+        #if rotation < 1e-6:
+            #return self.offset_x
+        #else:
+            #return self.rotateLens(self.rotation,self.left_x(y,rotation=0.),y)
+    
+    def left_x0(self,y):
         return self.offset_x
-        
-    def right_x(self,y):
+    
+    def left_x(self,y):
+        if np.abs(self.rotation) < 1e-6:
+            return self.left_x0(y)
+        else:
+            return self.rotateLens(self.rotation,self.left_x0,y)
+    
+    def right_x0(self,y):
         center_length = np.tan(self.alpha/180.*np.pi)*self.h/2.
-        return self.offset_x + self.d + center_length * (1.0 - np.abs(y)/(self.h/2.))
+        return self.offset_x + self.d + center_length * (1.0 - np.abs(y-np.sin(self.rotation)*center_length)/(self.h/2.))
+    
+    def right_x(self,y):
+        if np.abs(self.rotation) < 1e-6:
+            return self.right_x0(y)
+        else:
+            return self.rotateLens(self.rotation,self.right_x0,y)
         
 
 class Beam(object):
