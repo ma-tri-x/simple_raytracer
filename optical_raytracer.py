@@ -7,11 +7,11 @@ DEBUG=False
 DEBUGADV=False
 
 class Ray(object):
-    def __init__(self, startx, starty):
+    def __init__(self, startx, starty,nx=1.0,ny=0.0):
         self.x = [startx]
         self.y = [starty]
-        self.nx= 1.0
-        self.ny= 0.0
+        self.nx= nx
+        self.ny= ny
         self.use = True
         
     def pos_x(self,idx):
@@ -385,7 +385,7 @@ class AxiconLens(Lens):
         
 
 class Beam(object):
-    def __init__(self, width=5e-3, raycount=10, startx=-10e-3, water_x=0., endx=60e-3, debug=False, beam_offset_y = 0.):
+    def __init__(self, width=5e-3, raycount=10, startx=-10e-3, water_x=0., endx=60e-3, debug=False, beam_offset_y = 0., half_converging_angle_rad=0.):
         self.width = width
         self.startx = startx
         self.endx = endx
@@ -396,13 +396,21 @@ class Beam(object):
         self.lenses = []
         self.debug = debug
         self.beam_offset_y = beam_offset_y
+        self.half_converging_angle_rad = half_converging_angle_rad
         if self.raycount == 1:
             self.rays.append(Ray(startx,self.width))
         else:
             for i in range(self.raycount):
                 new_y = -self.width/2. + i*self.width/(self.raycount-1.) + self.beam_offset_y
+                nx,ny = 1.0,0.0
+                if self.half_converging_angle_rad > 1e-3:
+                    virt_focal_length = self.width/2./np.tan(self.half_converging_angle_rad)
+                    #print(virt_focal_length)
+                    hypothenuse = np.sqrt(virt_focal_length**2 + new_y**2)
+                    nx = virt_focal_length/hypothenuse
+                    ny = -new_y/hypothenuse
                 #print -self.width/2. + i*self.width/(self.raycount-1.)
-                self.rays.append(Ray(startx,new_y))
+                self.rays.append(Ray(startx,new_y,nx=nx,ny=ny))
         
     def end(self,dx_end=5e-3):
         num=0
