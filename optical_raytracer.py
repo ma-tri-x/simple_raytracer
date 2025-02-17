@@ -33,11 +33,12 @@ class Ray(object):
         self.y[-1] += self.ny*c
 
 class Lens(object):
-    def __init__(self, offset_x=0., n=1.75, h=1e-2):
+    def __init__(self, offset_x=0., n=1.75, h=1e-2, env_n_water_x = 1.333):
         self.offset_x=offset_x
         self.n = n
         self.h = h
         self.intervals=100
+        self.env_n_water_x = env_n_water_x
         
     def left_x(self):
         return
@@ -104,7 +105,7 @@ class Lens(object):
                     if angle_left > np.pi/2.: 
                         angle_left = np.pi - angle_left
                     env_n = 1.0
-                    if xhit > water_x: env_n = 1.333
+                    if xhit > water_x: env_n = self.env_n_water_x
                     ratio = env_n/self.n
                     if np.mod(iteration,2) == 1: ratio = 1./ratio
                     if sidefunc == self.right_x: ratio = 1./ratio
@@ -516,10 +517,11 @@ class NegativeCuvette(Beam,Lens):
     
     
 class Bubble(Lens):
-    def __init__(self, R=1e-3, offset_x=0.):
+    def __init__(self, R=1e-3, offset_x=0., env_n_water_x=1.333):
         self.R = R
         self.h = 2*R
         self.n = 1.0
+        self.env_n_water_x = env_n_water_x
         self.offset_x = offset_x
         self.intervals = Lens().intervals
             
